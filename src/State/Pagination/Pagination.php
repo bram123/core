@@ -186,7 +186,7 @@ final class Pagination
      */
     public function isPartialEnabled(?Operation $operation = null, array $context = []): bool
     {
-        return $this->getEnabled($context, $operation, true);
+        return $this->isEnabled($operation, $context) && $this->getEnabled($context, $operation, true);
     }
 
     public function getOptions(): array

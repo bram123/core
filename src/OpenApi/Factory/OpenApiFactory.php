@@ -937,40 +937,42 @@ final class OpenApiFactory implements OpenApiFactoryInterface
 
     private function getPaginationParameters(CollectionOperationInterface|HttpOperation $operation): array
     {
-        $parameters = [];
+        $paginationEnabled = $operation->getPaginationEnabled() ?? $this->paginationOptions->isPaginationEnabled();
+        if (!$paginationEnabled) {
+            return [];
+        }
 
-        if ($operation->getPaginationEnabled() ?? $this->paginationOptions->isPaginationEnabled()) {
+        $parameters = [];
+        $parameters[] = new Parameter(
+            $this->paginationOptions->getPaginationPageParameterName(),
+            'query',
+            'The collection page number',
+            false,
+            false,
+            null,
+            ['type' => 'integer', 'default' => 1],
+        );
+
+        if ($operation->getPaginationClientItemsPerPage() ?? $this->paginationOptions->getClientItemsPerPage()) {
+            $schema = [
+                'type' => 'integer',
+                'default' => $operation->getPaginationItemsPerPage() ?? $this->paginationOptions->getItemsPerPage(),
+                'minimum' => 0,
+            ];
+
+            if (null !== $maxItemsPerPage = ($operation->getPaginationMaximumItemsPerPage() ?? $this->paginationOptions->getMaximumItemsPerPage())) {
+                $schema['maximum'] = $maxItemsPerPage;
+            }
+
             $parameters[] = new Parameter(
-                $this->paginationOptions->getPaginationPageParameterName(),
+                $this->paginationOptions->getItemsPerPageParameterName(),
                 'query',
-                'The collection page number',
+                'The number of items per page',
                 false,
                 false,
                 null,
-                ['type' => 'integer', 'default' => 1],
+                $schema,
             );
-
-            if ($operation->getPaginationClientItemsPerPage() ?? $this->paginationOptions->getClientItemsPerPage()) {
-                $schema = [
-                    'type' => 'integer',
-                    'default' => $operation->getPaginationItemsPerPage() ?? $this->paginationOptions->getItemsPerPage(),
-                    'minimum' => 0,
-                ];
-
-                if (null !== $maxItemsPerPage = ($operation->getPaginationMaximumItemsPerPage() ?? $this->paginationOptions->getMaximumItemsPerPage())) {
-                    $schema['maximum'] = $maxItemsPerPage;
-                }
-
-                $parameters[] = new Parameter(
-                    $this->paginationOptions->getItemsPerPageParameterName(),
-                    'query',
-                    'The number of items per page',
-                    false,
-                    false,
-                    null,
-                    $schema,
-                );
-            }
         }
 
         if ($operation->getPaginationClientEnabled() ?? $this->paginationOptions->isPaginationClientEnabled()) {
